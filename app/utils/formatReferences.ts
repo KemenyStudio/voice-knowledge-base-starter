@@ -2,7 +2,7 @@ import { stripFileCiteMarkers } from "@/lib/chat/references"
 
 export function formatReference(reference: string, isReferenceSection: boolean = false): string {
   // Extraer el número de referencia y el nombre del archivo
-  const match = reference.match(/【(\d+):(\d+)(?:-(\d+))?(?:,(\d+):(\d+))?(?:,(\d+):(\d+))?†(.+?)】$/);
+  const match = reference.match(/【(\d+):(\d+)(?:-(\d+))?(?:,(\d+):(\d+))?(?:,(\d+):(\d+))?\†(.+?)】$/);
   
   if (!match) {
     return reference; // Si no coincide con el formato esperado, devolver la referencia original
@@ -21,7 +21,7 @@ export function formatReference(reference: string, isReferenceSection: boolean =
 
 export function formatReferences(text: string): string {
   // Buscar todas las referencias en el texto
-  const referenceRegex = /【\d+:\d+(?:-\d+)?(?:,\d+:\d+)?(?:,\d+:\d+)?†.+?】/g;
+  const referenceRegex = /【\d+:\d+(?:-\d+)?(?:,\d+:\d+)?(?:,\d+:\d+)?\†.+?】/g;
   
   // Reemplazar cada referencia encontrada
   let formattedText = stripFileCiteMarkers(text);
