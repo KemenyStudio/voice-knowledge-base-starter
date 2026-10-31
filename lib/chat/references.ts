@@ -17,9 +17,7 @@ export interface SplitAnswer {
 export function stripFileCiteMarkers(text: string): string {
   const cleaned = text
     .replace(/[\uE000-\uF8FF]/g, "")
-    .replace(/【[^\]
-]*(?:filecite|turn\d+file\d*)[^\]
-]*】/gi, "")
+    .replace(/【[^】\n]*(?:filecite|turn\d+file\d*)[^】\n]*】/gi, "")
     .replace(/filecite/gi, "")
     .replace(/turn\d+file\d*/gi, "")
   return cleaned
