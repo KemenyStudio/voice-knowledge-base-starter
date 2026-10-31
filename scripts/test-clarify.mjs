@@ -1,0 +1,20 @@
+import assert from "node:assert/strict"
+import { ClarifyGate, parseClarify } from "../lib/clarify.ts"
+const ctx = { entityOptions: ["Grupo A","Grupo B"], entityKnown: false }
+let g = new ClarifyGate()
+assert.equal(g.push("<cla"), ""); assert.equal(g.push("rify>{\"q"), ""); assert.equal(g.push("\"}"), "")
+g = new ClarifyGate()
+assert.equal(g.push("Hola "), "Hola "); assert.equal(g.push("mundo"), "mundo")
+g = new ClarifyGate(); assert.equal(g.push("<c"), ""); assert.equal(g.flush(), "<c")
+g = new ClarifyGate(); assert.equal(g.push("<b>x"), "<b>x")
+const ok = parseClarify('<clarify>{"question":"¿Cuál?","options":["A","B","a"]}</clarify>', ctx)
+assert.deepEqual(ok.clarify, { question: "¿Cuál?", options: ["A","B"] })
+const ent = parseClarify('<clarify>{"question":"¿Tipo?","options":["x"],"kind":"entity_type"}</clarify>', ctx)
+assert.deepEqual(ent.clarify.options, ["Grupo A","Grupo B"]); assert.equal(ent.clarify.kind, "entity_type")
+const known = parseClarify('<clarify>{"question":"¿Tipo?","options":["x","y"],"kind":"entity_type"}</clarify>', {...ctx, entityKnown:true})
+assert.equal(known.clarify.kind, undefined)
+assert.equal(parseClarify("Respuesta normal [1]", ctx).clarify, null)
+assert.equal(parseClarify("Respuesta normal [1]", ctx).text, "Respuesta normal [1]")
+assert.equal(parseClarify('<clarify>{"question":"solo","options":["A"]}</clarify>', ctx).clarify, null)
+assert.equal(parseClarify('<clarify>{bad', ctx).text.startsWith("¿Puedes"), true)
+console.log("clarify: ok")
