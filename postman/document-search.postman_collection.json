@@ -1,1 +1,1458 @@
-PLACEHOLDER_WILL_FAIL
+{
+  "info": {
+    "name": "Document search API",
+    "description": "App routes require a signed-in Supabase session. Log in in the browser, copy the `sb-<project>-auth-token` cookie(s) and paste the full Cookie header value into the `authCookie` collection variable. Unauthenticated calls return 401 JSON. The MCP folder is the exception: it uses the `mcpApiKey` variable (server API key), not the session cookie. See docs/MCP.md.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "authCookie",
+      "value": "sb-<project>-auth-token=..."
+    },
+    {
+      "key": "chatbotId",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "fileId",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "sessionId",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "fileId2",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "teamId",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "mcpApiKey",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Voice",
+      "item": [
+        {
+          "name": "Start a Spanish call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/voice/session",
+            "description": "Member of the chatbot's team. POST /v1/realtime/client_secrets. No OpenAI-Beta header. OpenAI-Safety-Identifier is a hash of the signed-in user. Response: { clientSecret, expiresAt, voice, model }. The session type is realtime, voice marin, Spanish, semantic VAD, and tools buscar_biblioteca, listar_biblioteca, abrir_documento, recordar_perfil, abrir_pantalla, consultar_app, resumen_biblioteca, and colgar. The Realtime tool schema has no async field. 401 without a session, 409 when the assistant has no documents or no search index.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Search the library during a call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/voice/search",
+            "description": "Member. Runs file_search on the assistant's existing vector store, the same index as POST /api/chat, including the entity-type filter. Response: { output, citations }. output is a JSON string { respuesta, documentos[], filtro_entidad } for the Realtime tool result. citations are { number, title, outdated? } for the live transcript. Optional searchAll: true skips the entity filter (the spoken \"busca en todos los documentos\"). 401 without a session, 409 when there is nothing to search.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"query\": \"¿De qué tratan los documentos de esta biblioteca?\",\n  \"searchAll\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "List documents during a call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/voice/action",
+            "description": "Member. Lists this assistant's library documents for the listar_biblioteca tool. Does not search the vector store. Response: { output } where output is a JSON string { respuesta, total, documentos[], omitidos }. 401 without a session.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"list\",\n  \"chatbotId\": \"{{chatbotId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Open a document during a call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/voice/action",
+            "description": "Member. Resolves a spoken title to one library file for abrir_documento. Response: { output, document? }. document is { title, url, outdated } when the title matches one file. url is /api/files/:id/download; the call UI previews it in the page. Ambiguous or unknown titles return output only.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"open\",\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"titulo\": \"Circular de la biblioteca\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Remember the caller's entity type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/voice/action",
+            "description": "Member. Saves the caller's entity type (perfil) for recordar_perfil, the same assistant_user_prefs row the chat uses. perfil must be one of the assistant's audience options. Response: { output, entity }. entity is the canonical option, or null when it does not match. No new tables.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"remember\",\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"perfil\": \"Bancos\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Read app figures during a call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/voice/action",
+            "description": "Member. consultar_app. dato is miembros, preguntas, retroalimentacion, or salud. Response: { output, navigate }. output is JSON { respuesta }. Admins get team figures. Members only get their own questions and ratings, plus the team member count and library counts. navigate is the page the call should open. Does not change passwords, delete documents, or spend money.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"app\",\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"dato\": \"miembros\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Library health summary during a call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/voice/action",
+            "description": "Admin. resumen_biblioteca. Calls GET /api/files/summary?chatbotId= and speaks only numbers that route returns: documents, ready, needs attention, missing audience, weak index, files in the index, and up to five worst document names. counts.chunks is null because the index does not publish a fragment total; the spoken answer says so and does not invent one. Members get an admin-only message. Response: { output, navigate }.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"biblioteca\",\n  \"chatbotId\": \"{{chatbotId}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "Ask the assistant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/chat",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": [{ \"content\": \"¿De qué tratan los documentos de esta biblioteca?\" }],\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "description": "Member of the chatbot's team. Returns { id, output_text, citations[] }. The server derives the user and the conversation context; if the chatbot has no documents it answers locally without calling the model. Add \"stream\": true to the body to receive newline-delimited JSON events: {type:status}, {type:delta,text}, then {type:done,id,output_text,citations}, then optionally {type:followups,questions:[up to 3 strings]} (or {type:error,message} instead of done). Follow-ups are also saved in the message meta. Without it, a single JSON document is returned. Optional \"useEntityFilter\": false searches every document even when the assistant filters by the user's entity type. The done event also carries \"clarify\" ({question, options[], kind?} when the assistant asks a clarifying question instead of answering; options are shown as buttons and the chosen one is sent as the next message) and \"entity_filter\" ({applied, entity}). Both are saved in the message meta. Optional \"focus\" ({action: \"summarize\"|\"compare\"|\"changes\", fileIds: [Library ids]}; 1 id for summarize, 2 for compare and changes) answers about those documents only: the search is limited to them, the entity filter is skipped and no clarifying question is asked. Ids that are not documents of the assistant return 404. Citations carry \"outdated\": true when an admin flagged the document as outdated. Each citation may include \"location\": { page, article, fileLocation }, copied from the search metadata; a null page means the citation did not include one. Optional \"passage\": { title, text, location } attaches a Fuentes chunk as context for this question only. The stored user message stays the question; the passage is saved on its meta and sent to the model with it."
+          }
+        },
+        {
+          "name": "Ask about documents (summarize / compare / what changed)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/chat",
+            "description": "Document actions. See \"Ask the assistant\" for the response format.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": [{ \"content\": \"Compara «Circular 21/2009» con «Circular 34/2010»\" }],\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"sessionId\": \"{{sessionId}}\",\n  \"stream\": true,\n  \"focus\": { \"action\": \"compare\", \"fileIds\": [\"{{fileId}}\", \"{{fileId2}}\"] }\n}"
+            }
+          }
+        },
+        {
+          "name": "Research mode (Investigar a fondo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/chat",
+            "description": "Member. Needs \"stream\": true and cannot be combined with \"focus\". The assistant plans 2-4 searches and writes one answer from the combined evidence. Extra NDJSON events before the first delta: {type:\"status\",status:\"planning\"}, {type:\"plan\",steps:[{id,label}]}, {type:\"step\",id,status:\"searching\"|\"done\",sources:N} per search, {type:\"status\",status:\"writing\"}. The done event carries \"research\": {steps:[{label,sources}]} (also saved in the message meta) and citations numbered as in the evidence. 403 when the assistant turned research off (chatbots.research_enabled), 429 after 15 research answers per user and assistant in 24 hours.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": [\n    {\n      \"content\": \"Compara las obligaciones de transparencia del CAT en créditos al consumo y tarjetas\"\n    }\n  ],\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"sessionId\": \"{{sessionId}}\",\n  \"stream\": true,\n  \"research\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "List conversations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sessions",
+            "description": "Conversations of the caller for one assistant, newest first, at most 200. Optional query (at least 2 characters) searches questions, answers and titles, including conversations older than that list, and returns at most 50.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"chatbotId\": \"{{chatbotId}}\" }"
+            }
+          }
+        },
+        {
+          "name": "Search conversations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sessions",
+            "description": "Same route as the list. query is matched literally (a percent sign is not a wildcard). 400 when query is a single character.",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"chatbotId\": \"{{chatbotId}}\", \"query\": \"capital mínimo\" }"
+            }
+          }
+        },
+        {
+          "name": "Rename a conversation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sessions",
+            "description": "Sets the title on the caller's messages in one conversation. Title is 1 to 120 characters. 404 when the conversation is not theirs. Returns { title, updated }.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"sessionId\": \"{{sessionId}}\",\n  \"title\": \"Capital mínimo de bancos\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete a conversation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/sessions",
+            "description": "Deletes the caller's messages in one conversation. Ratings of those answers go with them. A shared link is a separate copy and stays. 404 when nothing was deleted. Returns { deleted }.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Conversation transcript",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/history",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"chatbotId\": \"{{chatbotId}}\", \"sessionId\": \"{{sessionId}}\" }"
+            },
+            "description": "Transcript of one of the caller's conversations. Each item: { id, role, content, citations[], meta } where citations keep the title, passage text and download URL, and meta.follow_ups holds the suggested questions of an assistant message."
+          }
+        },
+        {
+          "name": "Share a conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/conversations/share",
+            "description": "Freezes the caller's conversation into a link for their team: returns { id, path } where path is /shared/<id>. Opening it needs a session and membership of the assistant's team. 404 when the conversation is empty.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assistants",
+      "item": [
+        {
+          "name": "Get assistant settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/chatbots/{{chatbotId}}",
+            "description": "Member of the team. Returns name, description, welcome_message, suggested_questions and the caller's role. Also returns audience_options and audience_filter."
+          }
+        },
+        {
+          "name": "Update assistant settings (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/chatbots/{{chatbotId}}",
+            "description": "Team admins only. Any subset of name, description, welcome_message (null resets to the generic one), suggested_questions ([{category, prompts[]}], max 6 groups), audience_options (entity types users can pick, trimmed and capped at 8) and audience_filter (when true, search skips documents marked as not applying to the user's entity type). After changing audience_options, call POST /api/files/audience with action sync. Also accepts \"prompt_notes\": up to 10 team instructions of at most 300 characters that are added to the assistant's instructions (admin only). GET returns \"prompt_notes\" and a \"knowledge\" overview ({documents, lastUpdated, types[]}). Also accepts \"research_enabled\" (boolean) and \"enabled_tools\" (array of draft_email | memo | check_validity).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"welcome_message\": \"Pregunta sobre ...\",\n  \"suggested_questions\": [\n    {\n      \"category\": \"General\",\n      \"prompts\": [\n        \"¿Qué documentos tienes?\"\n      ]\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get my preferences",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/chatbots/{{chatbotId}}/preferences",
+            "description": "What the assistant remembers about the signed-in user: { entity_type, entity_prompt_dismissed, email_alerts, length, navigation, options[] }. entity_type is only returned while it is one of the assistant's options. length is breve, normal, or detallada. navigation is app (open screens) or library."
+          }
+        },
+        {
+          "name": "Save my preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/chatbots/{{chatbotId}}/preferences",
+            "description": "Any member. entity_type must be one of the assistant's audience_options (case and accents ignored) or null to forget it; entity_prompt_dismissed hides the question in the empty chat. Also accepts \"email_alerts\": true|false (opt-in e-mail notices about replaced documents; false by default), \"length\": \"breve\"|\"normal\"|\"detallada\" and \"navigation\": \"app\"|\"library\" for the voice call. Defaults are normal and app.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entity_type\": \"Equipo legal\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Team onboarding progress (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/teams/{{teamId}}/onboarding",
+            "description": "Returns {steps:[{id,done}]} for assistant, documents, teammate and first question. Team admins only."
+          }
+        },
+        {
+          "name": "List tools of an assistant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tools?chatbotId={{chatbotId}}",
+            "description": "Member. Returns { tools: [{id,label,description,target}] } for the tools the assistant allows (chatbots.enabled_tools)."
+          }
+        },
+        {
+          "name": "Run a tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tools",
+            "description": "Member. tool = draft_email | memo (need messageId: one of the caller's own answers) | check_validity (needs fileId: a Library document) | newer_official_source (messageId and/or fileId). newer_official_source is a separate web search for a newer official publication. It does not run file_search. The response may include web_sources { note, sources: [{title, url, origin: web}] }. Those hits are web, not library citations. Returns { tool, text }; the text is only returned, nothing is sent or changed. 403 when the assistant switched a library tool off, 404 for answers or documents the caller cannot use, 429 after 30 runs per hour. Every run is logged in tool_runs (inputs and size, never the generated text).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"tool\": \"draft_email\",\n  \"messageId\": \"resp_...\",\n  \"instructions\": \"Para el director jurídico, tono breve\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Tool audit log (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tools/runs?chatbotId={{chatbotId}}",
+            "description": "Team admin. Last 50 runs: { runs: [{id,tool,status,user_email,output_chars,duration_ms,error,created_at}] }."
+          }
+        },
+        {
+          "name": "My change alerts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/alerts?chatbotId={{chatbotId}}",
+            "description": "Member. Published replacements of documents that appeared in the caller's own answers and that the caller has not dismissed (last 60 days): { alerts: [{id,publishedAt,newFile:{id,name},oldFile:{id,name}}] }."
+          }
+        },
+        {
+          "name": "Change alerts to review (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/alerts?chatbotId={{chatbotId}}&scope=review",
+            "description": "Team admin. { pending: [...], published: [...last 10] }. Pending items are suggestions found when a document is uploaded (similar names / same regulation number) or declared by hand; nothing is announced until published."
+          }
+        },
+        {
+          "name": "Change alert action (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/alerts",
+            "description": "Team admin. action = create {newFileId, oldFileId} (stays pending) | preview {alertId} -> {recipients, emailOptIn} | publish {alertId, sendEmails?} | dismiss {alertId}. publish links the versions (files.superseded_by), flags the old document as outdated (keeping an existing note), notifies in the app the members whose answers cited it, and e-mails only members who opted in AND only when sendEmails is true. Returns {recipients, emailed, failed}. 409 if already published.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"publish\",\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"alertId\": \"00000000-0000-0000-0000-000000000000\",\n  \"sendEmails\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Dismiss a change alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/alerts/seen",
+            "description": "Member. Hides one alert for the caller (omit alertId to hide all of this assistant).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"alertId\": \"00000000-0000-0000-0000-000000000000\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Knowledge base",
+      "item": [
+        {
+          "name": "List documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files?chatbotId={{chatbotId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files"
+              ],
+              "query": [
+                {
+                  "key": "chatbotId",
+                  "value": "{{chatbotId}}"
+                }
+              ]
+            },
+            "description": "Any team member. Rows include sync_status (pending | processing | ready | failed | external), index_health_score (0-100 or null) and index_health ({score, verdict, reasons, canUpload})."
+          }
+        },
+        {
+          "name": "Recent documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files?chatbotId={{chatbotId}}&recent=3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files"
+              ],
+              "query": [
+                {
+                  "key": "chatbotId",
+                  "value": "{{chatbotId}}"
+                },
+                {
+                  "key": "recent",
+                  "value": "3"
+                }
+              ]
+            },
+            "description": "Any team member. The newest documents only (1 to 8): id, file_name, uploaded_at. Skips the indexing refresh of the full list."
+          }
+        },
+        {
+          "name": "Get upload URL (admin) - step 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/upload/sign",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileName\": \"manual.pdf\",\n  \"size\": 1048576,\n  \"chatbotId\": \"{{chatbotId}}\"\n}"
+            },
+            "description": "Team admins only. Validates the file and returns {bucket, path, token}. Upload the bytes to Supabase Storage with uploadToSignedUrl(path, token, file), then call step 2."
+          }
+        },
+        {
+          "name": "Register and index upload (admin) - step 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/upload",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileName\": \"manual.pdf\",\n  \"storagePath\": \"<path returned by step 1>\",\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"metadata\": {\n    \"type_tag\": \"Manual\",\n    \"target_tag\": [\n      \"Equipo legal\"\n    ],\n    \"entity_tag\": [\n      \"Interno\"\n    ]\n  }\n}"
+            },
+            "description": "Team admins only. Registers the object uploaded in step 1, inspects it for the vector index, and indexes it in the chatbot's OpenAI vector store. Allowed: pdf, doc, docx, pptx, txt, md, html, json. The response file includes index_health_score and index_health."
+          }
+        },
+        {
+          "name": "Score index health (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/index-health",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\"\n}"
+            },
+            "description": "Team admins only. Inspects up to 4 library files that have no index_health yet (text, scans, empty files, passwords, size) and stores the score. Returns {scored, remaining}. Call again while remaining > 0. Does not delete or retag documents."
+          }
+        },
+        {
+          "name": "Replace index file with extracted text (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/{{fileId}}/index-text",
+            "body": {
+              "mode": "raw",
+              "raw": "{}\n"
+            },
+            "description": "Team admins only. Re-reads the stored PDF (titles without a .pdf suffix included). When the text is searchable and the index score would rise, replaces only the vector-store file with that text and stores the new index_health. The library row and the original file stay. Send {\"text\",\"pages\"} only for a scan whose PDF has no selectable text; that text is ignored when the PDF already has text. Skips with reason no_text when nothing could be read. Does not delete the document."
+          }
+        },
+        {
+          "name": "Propose document metadata with Astra (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/metadata",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"propose\",\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"fileId\": \"{{fileId}}\"\n}"
+            },
+            "description": "Team admins only. gpt-6-astra reads the stored document (or indexed passages) and returns a proposal. It does not save. Fields: nombre (used only when the name is empty), tipo (metadata.type_tag), audiencia (metadata.target_tag; existing label or a real new sector, never a forced nearby profile), audienciaFiltro (files.audience, empty when the sector is new), fuente (metadata.entity_tag), contexto (metadata.context). For a file that is not uploaded yet, omit fileId and send fileName plus text (max 20000 characters). Response: { proposal } or { proposal: null }."
+          }
+        },
+        {
+          "name": "Fill empty document metadata with Astra (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/metadata",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"fill_empty\",\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"skipIds\": []\n}"
+            },
+            "description": "Team admins only. Reads up to 2 documents that still lack tipo, audiencia, fuente or contexto and writes only the empty fields. Pass attemptedIds back as skipIds until remaining is 0. Does not delete files and does not upload a new copy. Updates vector-store attributes in place. Response: { updated, failed, skipped, attemptedIds, remaining, fields }."
+          }
+        },
+        {
+          "name": "Get document",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/{{fileId}}"
+          }
+        },
+        {
+          "name": "Update document metadata (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/{{fileId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileName\": \"manual-v2.pdf\",\n  \"metadata\": { \"type_tag\": \"Manual\", \"target_tag\": [], \"entity_tag\": [] }\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete document (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/{{fileId}}",
+            "description": "Removes it from the vector store first (502 if that fails), then file storage and the row."
+          }
+        },
+        {
+          "name": "Download document (302 to short-lived SAS URL)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/{{fileId}}/download",
+            "description": "302 to a short-lived signed URL. Use the preview request to show the file inside the app."
+          }
+        },
+        {
+          "name": "Preview document inline",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/{{fileId}}/download?inline=1",
+            "description": "Same access check as download. Returns the file bytes with Content-Disposition: inline for PDFs, text and images so the chat can show them in an iframe. Other types return a short HTML note. Does not redirect."
+          }
+        },
+        {
+          "name": "Retry / re-index document (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/{{fileId}}/sync"
+          }
+        },
+        {
+          "name": "Document audience actions (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/audience",
+            "description": "Team admins only. Body {action, chatbotId, ...}. from_tags: classify unclassified documents whose tags all map to entity types (others are left for review). suggest {fileIds?}: reads up to 12 documents that have no directed-to label or are still unclassified, writes metadata.target_tag and confirms the audience. A document is narrowed to the configured profiles only when it applies to those profiles and to nobody else; another sector or a broader statute gets its own label and stays visible to every profile. Returns {labeled, suggested, failed, remaining, index}. Call again until remaining is 0. accept {fileIds?}: confirm a suggestion stored earlier and, when the document has no label yet, copy that audience into target_tag. set {fileId, audience[]}: set one document's audience (empty = all entity types). sync {offset}: rewrite the search index attributes in batches of 40; repeat with the returned next until it is null. Never hides anything by itself: the filter only applies when audience_filter is on.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"set\",\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"fileId\": \"{{fileId}}\",\n  \"audience\": [\"Equipo legal\", \"Clientes\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Flag document as outdated (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/{{fileId}}",
+            "description": "Marks (or unmarks) a document as outdated. Answers that cite it show a warning. Body: {outdated: boolean, note?: string}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outdated\": true,\n  \"note\": \"Reemplazada por la versión 2025\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Library summary (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/summary?chatbotId={{chatbotId}}",
+            "description": "Admin only. Counts for the Biblioteca strip and the voice tool resumen_biblioteca: documents, indexFiles (completed files in the vector store), ready, needsAttention, missingAudience, weakIndex (score under 70), processing, and chunks (always null; the index does not publish a text-fragment total). Also a one-line Spanish quality read and up to five worst documents (id, name, score, reasons). No storage paths, vector-store ids, or keys."
+          }
+        },
+        {
+          "name": "Library health report (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/health?chatbotId={{chatbotId}}",
+            "description": "Totals, documents that need attention (no file, not indexed, failed, stuck, untagged, outdated) with plain-language explanations, and files that exist only in the search index."
+          }
+        },
+        {
+          "name": "Remove index-only files (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/files/health",
+            "description": "Removes files from the assistant's search index that have no Library entry. Only ids reported as index-only are removed (others are skipped); refused while a recent upload is still being registered. Body: {action: \"remove_orphans\", chatbotId, fileIds[]}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"remove_orphans\",\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"fileIds\": [\"file-abc123\"]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Feedback",
+      "item": [
+        {
+          "name": "Vote on evaluation question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/feedback",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": \"12\",\n  \"isPositive\": true,\n  \"evaluationSet\": \"20250101_120000\",\n  \"chatbotId\": \"{{chatbotId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "My votes + summary for an evaluation set",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/feedback/20250101_120000"
+          }
+        },
+        {
+          "name": "Rate an answer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/user_interaction",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"responseId\": \"resp_...\", \"rating\": 1, \"comment\": \"Útil\" }"
+            }
+          }
+        },
+        {
+          "name": "Answer feedback of my teams (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/response_feedback",
+            "description": "Team admins only; scoped to members of teams the caller administers. items: each rating with the assistant name, cited sources and triage state ({status: open|resolved, action, note}). summary: ratings, positive, low, open, ratedWithoutSources, answers, answersWithoutSources. unsourced: the 25 most recent assistant answers stored with no citations."
+          }
+        },
+        {
+          "name": "Triage answer feedback (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/response_feedback",
+            "description": "Actions: outdated_document (needs fileId; flags the document), prompt_note (needs note; adds it to the assistant's notes), request_document (note optional; stays open), dismiss, resolve, reopen. Optional notifyUser: true emails the rating's author a resolution notice (off by default). Admins of the assistant's team only.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageId\": \"resp_abc\",\n  \"userId\": \"00000000-0000-0000-0000-000000000000\",\n  \"action\": \"prompt_note\",\n  \"note\": \"Aclara siempre la fecha de vigencia\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List evaluation result files",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/evaluation_results"
+          }
+        }
+      ]
+    },
+    {
+      "name": "MCP",
+      "description": "Remote MCP server. Authorization is Bearer {{mcpApiKey}} (MCP_API_KEY on the server), scoped to one team. A session cookie is not used. Accept must list both application/json and text/event-stream.",
+      "item": [
+        {
+          "name": "List tools",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{mcpApiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json, text/event-stream"
+              }
+            ],
+            "url": "{{baseUrl}}/api/mcp",
+            "description": "JSON-RPC tools/list. Expected tools: list_assistants, search_library, list_documents, get_document, get_feedback_summary.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"tools/list\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Search the library",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{mcpApiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json, text/event-stream"
+              }
+            ],
+            "url": "{{baseUrl}}/api/mcp",
+            "description": "tools/call search_library. Same vector store as chat. assistantId is optional when the team has one assistant. entityType applies the audience filter.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 2,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"search_library\",\n    \"arguments\": {\n      \"query\": \"¿De qué tratan los documentos de esta biblioteca?\",\n      \"assistantId\": \"{{chatbotId}}\",\n      \"maxResults\": 8\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "List documents",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{mcpApiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json, text/event-stream"
+              }
+            ],
+            "url": "{{baseUrl}}/api/mcp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 3,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"list_documents\",\n    \"arguments\": {\n      \"assistantId\": \"{{chatbotId}}\",\n      \"limit\": 50\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Get a document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{mcpApiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json, text/event-stream"
+              }
+            ],
+            "url": "{{baseUrl}}/api/mcp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 4,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_document\",\n    \"arguments\": {\n      \"documentId\": \"{{fileId}}\"\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Eval and feedback summary",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{mcpApiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json, text/event-stream"
+              }
+            ],
+            "url": "{{baseUrl}}/api/mcp",
+            "description": "tools/call get_feedback_summary. Counts are limited to the API key's team.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 5,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"get_feedback_summary\",\n    \"arguments\": {}\n  }\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Later review",
+      "item": [
+        {
+          "name": "Admin usage",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/usage?chatbotId={{chatbotId}}",
+            "description": "Team admin. Usage counts, eval votes, ratings, answers without sources, and stored telemetry (tool duration, tool errors, model-call ids, citations, index status). Answer latency and model errors are null. Requires assistant_usage_metrics. 403 for members."
+          }
+        },
+        {
+          "name": "Recent questions for history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/history/questions?chatbotId={{chatbotId}}",
+            "description": "Team admin. Recent team questions shown in Historial. own is true only for the caller. 403 for members."
+          }
+        },
+        {
+          "name": "Infrastructure status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/infra?chatbotId={{chatbotId}}",
+            "description": "Team admin. Services this instance is configured to call (present, missing, or misconfigured). The body names models and env var names. It does not include secret values. 403 for members."
+          }
+        },
+        {
+          "name": "Obligations table from one answer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/obligations",
+            "description": "Member. Builds a table of obligations, deadlines and sanctions from one of the caller's saved answers. Does not search the library. Body messageId is the assistant message id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"messageId\": \"resp_...\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Rewind a question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/history/rewind",
+            "description": "Member. Deletes the caller's question and every later message in that conversation so it can be asked again. A shared link is a copy and stays.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"sessionId\": \"{{sessionId}}\",\n  \"messageId\": \"user-message-id\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Pin or folder a message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/messages/place",
+            "description": "Member. Pins one of the caller's messages and/or sets its folder (setFolder true, folder null clears it). Folder names are 1 to 40 characters.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"messageId\": \"user-message-id\",\n  \"pinned\": true,\n  \"setFolder\": true,\n  \"folder\": \"Capital\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List source proposals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/watch?chatbotId={{chatbotId}}",
+            "description": "Team admin. Official documents found by Vigilancia that are not in the library yet. Titles already in the library are omitted."
+          }
+        },
+        {
+          "name": "Scan public sources",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/watch",
+            "description": "Team admin. Reads public DOF, CNBV and Banxico pages, downloads each new official file, and indexes it in this assistant's library (same path as upload, including index health). A title already in the library is skipped and the existing file is not replaced. A second call within a minute does not scan the public pages again, but still tries to add documents that are still pending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Dismiss a source proposal",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/watch",
+            "description": "Team admin. Marks one pending document as dismissed so it is not downloaded.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"id\": \"00000000-0000-0000-0000-000000000000\",\n  \"status\": \"dismissed\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Preview a source document",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/watch/preview?chatbotId={{chatbotId}}&id=00000000-0000-0000-0000-000000000000",
+            "description": "Team admin. Returns the official file inline when the browser can show it. JSON { fileId } when it is already in the library. JSON { ok, previewInline: false } when the file was fetched but cannot be shown inline. 422 when the file cannot be fetched. Does not add it to the library."
+          }
+        },
+        {
+          "name": "Add a fetched source document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "{{authCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/watch/ingest",
+            "description": "Team admin. Downloads one pending official file and adds it through the library upload path, including index health. Does not replace an existing library file. Call it after the preview could fetch the file.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatbotId\": \"{{chatbotId}}\",\n  \"id\": \"00000000-0000-0000-0000-000000000000\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
