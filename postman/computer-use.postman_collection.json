@@ -1,0 +1,33 @@
+{
+  "info": {
+    "name": "Computer use harness",
+    "description": "Local only. Start the app with COMPUTER_USE_FIXTURE=1. The route returns 404 when that flag is off and 403 when Host is not loopback. It does not accept a vector store id and it does not read the team library. No API key is sent.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:3317"
+    }
+  ],
+  "item": [
+    {
+      "name": "Ask the isolated corpus",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/harness/kb",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"¿Cuál es el código de recogida de la prueba aislada?\"\n}"
+        },
+        "description": "Returns the cited passage for the fixture question. The answer text does not repeat the code; the citation text does, when the right passage is selected."
+      }
+    }
+  ]
+}
